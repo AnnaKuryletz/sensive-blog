@@ -2,8 +2,8 @@ from django.db import models
 from django.urls import reverse
 from django.contrib.auth.models import User
 
-
 class Post(models.Model):
+    id = models.BigAutoField(primary_key=True)
     title = models.CharField('Заголовок', max_length=200)
     text = models.TextField('Текст')
     slug = models.SlugField('Название в виде url', max_length=200)
@@ -14,16 +14,19 @@ class Post(models.Model):
         User,
         on_delete=models.CASCADE,
         verbose_name='Автор',
-        limit_choices_to={'is_staff': True})
+        limit_choices_to={'is_staff': True}
+    )
     likes = models.ManyToManyField(
         User,
         related_name='liked_posts',
         verbose_name='Кто лайкнул',
-        blank=True)
+        blank=True
+    )
     tags = models.ManyToManyField(
         'Tag',
         related_name='posts',
-        verbose_name='Теги')
+        verbose_name='Теги'
+    )
 
     def __str__(self):
         return self.title
@@ -38,6 +41,7 @@ class Post(models.Model):
 
 
 class Tag(models.Model):
+    id = models.BigAutoField(primary_key=True)
     title = models.CharField('Тег', max_length=20, unique=True)
 
     def __str__(self):
@@ -47,7 +51,7 @@ class Tag(models.Model):
         self.title = self.title.lower()
 
     def get_absolute_url(self):
-        return reverse('tag_filter', args={'tag_title': self.slug})
+        return reverse('tag_filter', args={'tag_title': self.title})
 
     class Meta:
         ordering = ['title']
@@ -56,15 +60,17 @@ class Tag(models.Model):
 
 
 class Comment(models.Model):
+    id = models.BigAutoField(primary_key=True)
     post = models.ForeignKey(
         'Post',
         on_delete=models.CASCADE,
-        verbose_name='Пост, к которому написан')
+        verbose_name='Пост, к которому написан'
+    )
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        verbose_name='Автор')
-
+        verbose_name='Автор'
+    )
     text = models.TextField('Текст комментария')
     published_at = models.DateTimeField('Дата и время публикации')
 
