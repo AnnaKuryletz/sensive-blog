@@ -18,7 +18,7 @@ def serialize_post(post):
         "published_at": post.published_at,
         "slug": post.slug,
         "tags": [serialize_tag(tag) for tag in post.tags.all()],
-        "first_tag_title": post.tags.all()[0].title,
+        "first_tag_title": post.tags.first().title if post.tags.exists() else None,
     }
 
 
@@ -69,7 +69,7 @@ def post_detail(request, slug):
     ]
 
     related_tags = post.tags.all()
-    likes = post.likes.all()
+    likes = post.likes.count()
     serialized_post = {
         "title": post.title,
         "text": post.text,
