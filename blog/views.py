@@ -1,5 +1,5 @@
-from django.shortcuts import render
-from blog.models import Comment, Post, Tag
+from django.shortcuts import render, get_object_or_404
+from blog.models import Post, Tag
 from django.db.models import Count
 
 
@@ -46,9 +46,7 @@ def index(request):
     most_popular_tags = Tag.objects.popular().annotate(posts_count=Count("posts"))[:5]
 
     context = {
-        "most_popular_posts": [
-            serialize_post(post) for post in most_popular_posts
-        ],
+        "most_popular_posts": [serialize_post(post) for post in most_popular_posts],
         "page_posts": [serialize_post(post) for post in most_fresh_posts],
         "popular_tags": [serialize_tag(tag) for tag in most_popular_tags],
     }
@@ -56,7 +54,9 @@ def index(request):
 
 
 def post_detail(request, slug):
-    post = Post.objects.get(slug=slug)
+    post = get_object_or_404(
+        Post.objects.annotate(likes_count=Count("likes")), slug=slug
+    )
     comments = post.comments.select_related("author")
     serialized_comments = []
     serialized_comments = [
@@ -69,7 +69,6 @@ def post_detail(request, slug):
     ]
 
     related_tags = post.tags.all()
-    likes = post.likes.count()
     serialized_post = {
         "title": post.title,
         "text": post.text,
@@ -91,16 +90,14 @@ def post_detail(request, slug):
     context = {
         "post": serialized_post,
         "popular_tags": [serialize_tag(tag) for tag in most_popular_tags],
-        "most_popular_posts": [
-            serialize_post(post) for post in most_popular_posts
-        ],
+        "most_popular_posts": [serialize_post(post) for post in most_popular_posts],
     }
     return render(request, "post-details.html", context)
 
 
 def tag_filter(request, tag_title):
 
-    tag = Tag.objects.get(title=tag_title)
+    tag = get_object_or_404(Tag, title=tag_title)
     most_popular_tags = Tag.objects.popular().annotate(posts_count=Count("posts"))[:5]
     most_popular_posts = Post.objects.popular().prefetch_related(
         "author", "tags", "comments"
@@ -116,9 +113,7 @@ def tag_filter(request, tag_title):
         "tag": tag.title,
         "popular_tags": [serialize_tag(tag) for tag in most_popular_tags],
         "posts": [serialize_post(post) for post in related_posts],
-        "most_popular_posts": [
-            serialize_post(post) for post in most_popular_posts
-        ],
+        "most_popular_posts": [serialize_post(post) for post in most_popular_posts],
     }
     return render(request, "posts-list.html", context)
 
